@@ -1,6 +1,9 @@
-name: build mite project
+name: Setup MITE
 author: yuchenxue
 description: download mite jar and move to correct path
+branding:
+  icon: activity
+  color: blue
 
 inputs:
   download-url:
