@@ -1,0 +1,12 @@
+name: test.yml
+on: workflow_dispatch
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: setup mite
+        uses: yuchenxue123/setup-mite@v1
+        with:
+          download-url: https://raw.githubusercontent.com/yuchenxue123/builder/main/mite.jar
+          mite-version: 1.6.4-MITE

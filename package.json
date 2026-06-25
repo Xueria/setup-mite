@@ -1,0 +1,21 @@
+{
+  "name": "setup-mite",
+  "version": "1.0.2",
+  "description": "GitHub Action to download MITE jar",
+  "main": "dist/index.js",
+  "author": "yuchenxue",
+  "license": "MIT",
+  "scripts": {
+    "build": "ncc build src/index.ts -o dist",
+    "prerelease": "npm run-script build",
+    "release": "git add -f dist/index.js"
+  },
+  "dependencies": {
+    "@actions/core": "^2.0.3"
+  },
+  "devDependencies": {
+    "@types/node": "^26.0.1",
+    "@vercel/ncc": "^0.44.0",
+    "typescript": "^5.3.3"
+  }
+}

@@ -1,0 +1,15 @@
+name: build mite project
+author: yuchenxue
+description: download mite jar and move to correct path
+
+inputs:
+  download-url:
+    description: mite download url
+    required: true
+  mite-version:
+    description: mite version
+    required: true
+
+runs:
+  using: node24
+  main: dist/index.js
