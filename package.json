@@ -1,6 +1,6 @@
 {
   "name": "setup-mite",
-  "version": "1.0.2",
+  "version": "1.0.4",
   "description": "GitHub Action to download MITE jar",
   "main": "dist/index.js",
   "author": "yuchenxue",

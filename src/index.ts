@@ -52,7 +52,7 @@ function run() {
 
     if (fs.existsSync(dest)) {
         core.info(`File already exists: ${dest}`);
-        return;
+        fs.unlinkSync(dest);
     }
 
     if (!fs.existsSync(target)) {
