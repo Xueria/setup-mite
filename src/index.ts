@@ -59,7 +59,7 @@ function run() {
         fs.mkdirSync(target, { recursive: true });
     }
 
-    core.info(`Downloading ${MITE_VERSION}.jar ...`);
+    core.info(`Downloading ${MITE_VERSION}.jar`);
     core.info(`Download URL: ${MITE_DOWNLOAD_URL}`);
 
     download(MITE_DOWNLOAD_URL, dest)
