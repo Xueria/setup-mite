@@ -10,7 +10,7 @@ The action downloads the MITE JAR from a given URL and saves it to:
 ~/.gradle/caches/fml-loom/{mite-version}/{mite-version}.jar
 ```
 
-If the file already exists at that path the action skips the download.
+If the file already exists at that path the action overwrite it.
 
 ## Usage
 
