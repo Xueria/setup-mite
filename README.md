@@ -16,7 +16,7 @@ If the file already exists at that path the action overwrite it.
 
 ```yaml
 - name: setup mite
-  uses: yuchenxue123/setup-mite@v1
+  uses: Xueria/setup-mite@v1
   with:
     download-url: The URL of the MITE JAR to download
     mite-version: 1.6.4-MITE
