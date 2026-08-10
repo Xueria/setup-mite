@@ -1,0 +1,34 @@
+name: Build
+on: [ push, workflow_dispatch ]
+
+jobs:
+  setup:
+    runs-on: ubuntu-latest
+    steps:
+      - name: checkout
+        uses: actions/checkout@v7
+        with:
+          repository: MinecraftIsTooEasy/Sieve
+          path: ./test
+
+      - name: setup java
+        uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: 17
+
+      - name: setup gradle
+        uses: gradle/actions/setup-gradle@v6
+
+      - name: setup mite
+        uses: Xueria/setup-mite@master
+        with:
+          download-url: https://maven.limingzxc.top/repository/maven-releases/com/mojang/minecraft/1.6.4-MITE/minecraft-1.6.4-MITE.jar
+          mite-version: 1.6.4-MITE
+
+      - name: build
+        run: |
+          cd ./test
+          chmod +x ./gradlew
+          ./gradlew build
+
