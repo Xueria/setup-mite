@@ -1,0 +1,21 @@
+{
+  "name": "setup-mite",
+  "version": "1.0.0",
+  "description": "GitHub Action to download MITE jar",
+  "main": "dist/index.js",
+  "author": "yuchenxue",
+  "license": "MIT",
+  "scripts": {
+    "build": "node build.mjs",
+    "prerelease": "npm run-script build",
+    "release": "git add -f dist/index.js"
+  },
+  "dependencies": {
+    "@actions/core": "^3.0.1"
+  },
+  "devDependencies": {
+    "@types/node": "^26.2.0",
+    "esbuild": "^0.28.2",
+    "typescript": "^7.0.2"
+  }
+}

@@ -1,0 +1,13 @@
+name: Self
+on: [ push ]
+
+jobs:
+  setup:
+    runs-on: ubuntu-latest
+    steps:
+      - name: setup mite
+        uses: Xueria/setup-mite@master
+        with:
+          download-url: https://maven.limingzxc.top/repository/maven-releases/com/mojang/minecraft/1.6.4-MITE/minecraft-1.6.4-MITE.jar
+          mite-version: 1.6.4-MITE
+
