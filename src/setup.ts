@@ -14,6 +14,8 @@ export async function setup(options: SetupOptions) {
 
     fs.mkdirSync(path.dirname(dest), {recursive: true});
 
+    await sizeof(options.url);
+
     if (fs.existsSync(dest)
         && fs.statSync(dest).size === await sizeof(options.url)) {
         return dest;
