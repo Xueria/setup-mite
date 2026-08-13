@@ -1,5 +1,6 @@
 import fs from "fs";
 import https from "https";
+import * as core from "@actions/core";
 
 export class DownloadError extends Error {
     constructor(message: string, readonly url: string, readonly status?: number) {
@@ -15,6 +16,8 @@ export function download(url: string, dest: string) {
     return new Promise<void>((resolve, reject) => {
         const file = fs.createWriteStream(dest);
         let settled = false;
+
+        core.info(`Downloading ${url} -> ${dest}`);
 
         const fail = (err: Error) => {
             if (settled) return;
@@ -63,3 +66,41 @@ export function download(url: string, dest: string) {
     });
 }
 
+export function sizeof(url: string): Promise<number> {
+    return new Promise<number>((resolve, reject) => {
+        const request = (url: string, redirects: number) => {
+            const req = https.request(url, {
+                method: "HEAD",
+                headers: {"User-Agent": "github-action"},
+                timeout: TIMEOUT_MS,
+            }, (response) => {
+                if (response.statusCode! >= 300 && response.statusCode! < 400 && response.headers.location) {
+                    response.resume();
+                    if (redirects === 0) return resolve(0);
+                    return request(new URL(response.headers.location, url).toString(), redirects - 1);
+                }
+
+                response.resume();
+                const remoteSize = Number(response.headers["content-length"]);
+
+                if (!Number.isFinite(remoteSize)) {
+                    core.warning(`No content-length from ${url}, will download`);
+                    return resolve(0);
+                }
+
+                core.info(`Remote file size: ${remoteSize}`)
+
+                return resolve(remoteSize);
+            });
+
+            req.on("timeout", () => req.destroy());
+            req.on("error", () => {
+                core.warning(`Failed to query size of ${url}, will download`);
+                resolve(0);
+            });
+            req.end();
+        };
+
+        request(url, MAX_REDIRECT_DEPTH);
+    });
+}

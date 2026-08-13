@@ -1,7 +1,7 @@
-import {get_target_location} from "./paths";
 import fs from "fs";
 import path from "path";
-import {download} from "./download";
+import * as core from "@actions/core";
+import {download, sizeof} from "./download";
 
 export interface SetupOptions {
     url: string;
@@ -10,13 +10,22 @@ export interface SetupOptions {
 }
 
 export async function setup(options: SetupOptions) {
-    const dest = get_target_location(options.gradle, options.version);
+    const dest = path.join(options.gradle, "caches", "fml-loom", options.version, `${options.version}.jar`);
     const temp = `${dest}.temp`;
 
-    fs.mkdirSync(path.dirname(dest), { recursive: true });
+    fs.mkdirSync(path.dirname(dest), {recursive: true});
+
+    if (fs.existsSync(dest)
+        && fs.statSync(dest).size === await sizeof(options.url)) {
+        core.info(`Cache hit: ${dest} (size matches remote)`);
+        return dest;
+    }
 
     await download(options.url, temp);
-    fs.rmSync(dest, { force: true });
+
+    core.info("Download success!");
+
+    fs.rmSync(dest, {force: true});
     fs.renameSync(temp, dest);
     return dest;
 }
