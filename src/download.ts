@@ -1,5 +1,6 @@
 import fs from "fs";
 import https from "https";
+import * as core from "@actions/core";
 
 export class DownloadError extends Error {
     constructor(message: string, readonly url: string, readonly status?: number) {
@@ -63,14 +64,8 @@ export function download(url: string, dest: string) {
     });
 }
 
-export function checkSize(url: string, dest: string): Promise<boolean> {
-    return new Promise<boolean>((resolve, reject) => {
-        if (!fs.existsSync(dest)) {
-            return resolve(false);
-        }
-
-        const filesize = fs.statSync(dest).size;
-
+export function sizeof(url: string): Promise<number> {
+    return new Promise<number>((resolve, reject) => {
         const request = (url: string, redirects: number) => {
             const req = https.request(url, {
                 method: "HEAD",
@@ -79,22 +74,26 @@ export function checkSize(url: string, dest: string): Promise<boolean> {
             }, (response) => {
                 if (response.statusCode! >= 300 && response.statusCode! < 400 && response.headers.location) {
                     response.resume();
-                    if (redirects === 0) return resolve(false);
+                    if (redirects === 0) return resolve(0);
                     return request(new URL(response.headers.location, url).toString(), redirects - 1);
                 }
 
                 response.resume();
                 const remoteSize = Number(response.headers["content-length"]);
-                const isSame = Number.isFinite(remoteSize) && remoteSize === filesize;
-                return resolve(isSame);
+
+                if (Number.isFinite(remoteSize)) {
+                    return resolve(0);
+                }
+
+                core.info(`Remote file size: ${remoteSize}`)
+                return resolve(remoteSize);
             });
 
             req.on("timeout", () => req.destroy());
-            req.on("error", () => resolve(false));
+            req.on("error", () => resolve(0));
             req.end();
         };
 
         request(url, MAX_REDIRECT_DEPTH);
     });
 }
-

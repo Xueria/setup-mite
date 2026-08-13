@@ -1,6 +1,6 @@
 import fs from "fs";
 import path from "path";
-import {checkSize, download} from "./download";
+import {download, sizeof} from "./download";
 
 export interface SetupOptions {
     url: string;
@@ -12,14 +12,15 @@ export async function setup(options: SetupOptions) {
     const dest = path.join(options.gradle, "caches", "fml-loom", options.version, `${options.version}.jar`);
     const temp = `${dest}.temp`;
 
-    fs.mkdirSync(path.dirname(dest), { recursive: true });
+    fs.mkdirSync(path.dirname(dest), {recursive: true});
 
-    if (fs.existsSync(dest) && await checkSize(options.url, dest)) {
+    if (fs.existsSync(dest)
+        && fs.statSync(dest).size === await sizeof(options.url)) {
         return dest;
     }
 
     await download(options.url, temp);
-    fs.rmSync(dest, { force: true });
+    fs.rmSync(dest, {force: true});
     fs.renameSync(temp, dest);
     return dest;
 }
