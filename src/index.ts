@@ -15,8 +15,12 @@ async function run() {
         gradle: gradleUserHome
     };
 
+    core.startGroup("setup mite");
+
     const dest = await setup(options);
     core.info(`File is ready at ${dest}`);
+
+    core.endGroup();
 }
 
 run().catch((err) => {

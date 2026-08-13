@@ -17,6 +17,8 @@ export function download(url: string, dest: string) {
         const file = fs.createWriteStream(dest);
         let settled = false;
 
+        core.info(`Downloading ${url} -> ${dest}`);
+
         const fail = (err: Error) => {
             if (settled) return;
             settled = true;
@@ -82,6 +84,7 @@ export function sizeof(url: string): Promise<number> {
                 const remoteSize = Number(response.headers["content-length"]);
 
                 if (!Number.isFinite(remoteSize)) {
+                    core.warning(`No content-length from ${url}, will download`);
                     return resolve(0);
                 }
 
@@ -91,7 +94,10 @@ export function sizeof(url: string): Promise<number> {
             });
 
             req.on("timeout", () => req.destroy());
-            req.on("error", () => resolve(0));
+            req.on("error", () => {
+                core.warning(`Failed to query size of ${url}, will download`);
+                resolve(0);
+            });
             req.end();
         };
 

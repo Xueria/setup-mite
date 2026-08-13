@@ -17,12 +17,13 @@ export async function setup(options: SetupOptions) {
 
     if (fs.existsSync(dest)
         && fs.statSync(dest).size === await sizeof(options.url)) {
+        core.info(`Cache hit: ${dest} (size matches remote)`);
         return dest;
     }
 
     await download(options.url, temp);
 
-    core.info("download success");
+    core.info("Download success!");
 
     fs.rmSync(dest, {force: true});
     fs.renameSync(temp, dest);
