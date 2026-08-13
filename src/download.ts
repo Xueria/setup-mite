@@ -63,3 +63,38 @@ export function download(url: string, dest: string) {
     });
 }
 
+export function checkSize(url: string, dest: string): Promise<boolean> {
+    return new Promise<boolean>((resolve, reject) => {
+        if (!fs.existsSync(dest)) {
+            return resolve(false);
+        }
+
+        const filesize = fs.statSync(dest).size;
+
+        const request = (url: string, redirects: number) => {
+            const req = https.request(url, {
+                method: "HEAD",
+                headers: {"User-Agent": "github-action"},
+                timeout: TIMEOUT_MS,
+            }, (response) => {
+                if (response.statusCode! >= 300 && response.statusCode! < 400 && response.headers.location) {
+                    response.resume();
+                    if (redirects === 0) return resolve(false);
+                    return request(new URL(response.headers.location, url).toString(), redirects - 1);
+                }
+
+                response.resume();
+                const remoteSize = Number(response.headers["content-length"]);
+                const isSame = Number.isFinite(remoteSize) && remoteSize === filesize;
+                return resolve(isSame);
+            });
+
+            req.on("timeout", () => req.destroy());
+            req.on("error", () => resolve(false));
+            req.end();
+        };
+
+        request(url, MAX_REDIRECT_DEPTH);
+    });
+}
+

@@ -1,7 +1,6 @@
-import {get_target_location} from "./paths";
 import fs from "fs";
 import path from "path";
-import {download} from "./download";
+import {checkSize, download} from "./download";
 
 export interface SetupOptions {
     url: string;
@@ -10,10 +9,14 @@ export interface SetupOptions {
 }
 
 export async function setup(options: SetupOptions) {
-    const dest = get_target_location(options.gradle, options.version);
+    const dest = path.join(options.gradle, "caches", "fml-loom", options.version, `${options.version}.jar`);
     const temp = `${dest}.temp`;
 
     fs.mkdirSync(path.dirname(dest), { recursive: true });
+
+    if (fs.existsSync(dest) && await checkSize(options.url, dest)) {
+        return dest;
+    }
 
     await download(options.url, temp);
     fs.rmSync(dest, { force: true });
