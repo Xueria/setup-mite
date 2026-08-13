@@ -81,11 +81,12 @@ export function sizeof(url: string): Promise<number> {
                 response.resume();
                 const remoteSize = Number(response.headers["content-length"]);
 
-                if (Number.isFinite(remoteSize)) {
+                if (!Number.isFinite(remoteSize)) {
                     return resolve(0);
                 }
 
                 core.info(`Remote file size: ${remoteSize}`)
+
                 return resolve(remoteSize);
             });
 

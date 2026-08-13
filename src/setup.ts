@@ -1,5 +1,6 @@
 import fs from "fs";
 import path from "path";
+import * as core from "@actions/core";
 import {download, sizeof} from "./download";
 
 export interface SetupOptions {
@@ -14,14 +15,15 @@ export async function setup(options: SetupOptions) {
 
     fs.mkdirSync(path.dirname(dest), {recursive: true});
 
-    await sizeof(options.url);
-
     if (fs.existsSync(dest)
         && fs.statSync(dest).size === await sizeof(options.url)) {
         return dest;
     }
 
     await download(options.url, temp);
+
+    core.info("download success");
+
     fs.rmSync(dest, {force: true});
     fs.renameSync(temp, dest);
     return dest;

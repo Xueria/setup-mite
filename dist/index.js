@@ -19296,19 +19296,9 @@ function info(message) {
   process.stdout.write(message + os3.EOL);
 }
 
-// src/paths.ts
-var import_path = __toESM(require("path"));
-var import_node_os = __toESM(require("node:os"));
-function gradle_user_home() {
-  return process.env.GRADLE_USER_HOME ?? import_path.default.join(import_node_os.default.homedir(), ".gradle");
-}
-function get_target_location(gradle, version) {
-  return import_path.default.join(gradle, "caches", "fml-loom", version, `${version}.jar`);
-}
-
 // src/setup.ts
 var import_fs3 = __toESM(require("fs"));
-var import_path2 = __toESM(require("path"));
+var import_path = __toESM(require("path"));
 
 // src/download.ts
 var import_fs2 = __toESM(require("fs"));
@@ -19367,26 +19357,61 @@ function download(url, dest) {
     request(url, MAX_REDIRECT_DEPTH);
   });
 }
+function sizeof(url) {
+  return new Promise((resolve, reject) => {
+    const request = (url2, redirects) => {
+      const req = import_https.default.request(url2, {
+        method: "HEAD",
+        headers: { "User-Agent": "github-action" },
+        timeout: TIMEOUT_MS
+      }, (response) => {
+        if (response.statusCode >= 300 && response.statusCode < 400 && response.headers.location) {
+          response.resume();
+          if (redirects === 0) return resolve(0);
+          return request(new URL(response.headers.location, url2).toString(), redirects - 1);
+        }
+        response.resume();
+        const remoteSize = Number(response.headers["content-length"]);
+        if (!Number.isFinite(remoteSize)) {
+          return resolve(0);
+        }
+        info(`Remote file size: ${remoteSize}`);
+        return resolve(remoteSize);
+      });
+      req.on("timeout", () => req.destroy());
+      req.on("error", () => resolve(0));
+      req.end();
+    };
+    request(url, MAX_REDIRECT_DEPTH);
+  });
+}
 
 // src/setup.ts
 async function setup(options) {
-  const dest = get_target_location(options.gradle, options.version);
+  const dest = import_path.default.join(options.gradle, "caches", "fml-loom", options.version, `${options.version}.jar`);
   const temp = `${dest}.temp`;
-  import_fs3.default.mkdirSync(import_path2.default.dirname(dest), { recursive: true });
+  import_fs3.default.mkdirSync(import_path.default.dirname(dest), { recursive: true });
+  if (import_fs3.default.existsSync(dest) && import_fs3.default.statSync(dest).size === await sizeof(options.url)) {
+    return dest;
+  }
   await download(options.url, temp);
+  info("download success");
   import_fs3.default.rmSync(dest, { force: true });
   import_fs3.default.renameSync(temp, dest);
   return dest;
 }
 
 // src/index.ts
+var import_path2 = __toESM(require("path"));
+var import_node_os = __toESM(require("node:os"));
 var INPUT_DOWNLOAD_URL = getInput("download-url", { required: true });
 var INPUT_MITE_VERSION = getInput("mite-version", { required: true });
 async function run() {
+  const gradleUserHome = process.env.GRADLE_USER_HOME ?? import_path2.default.join(import_node_os.default.homedir(), ".gradle");
   const options = {
     url: INPUT_DOWNLOAD_URL,
     version: INPUT_MITE_VERSION,
-    gradle: gradle_user_home()
+    gradle: gradleUserHome
   };
   const dest = await setup(options);
   info(`File is ready at ${dest}`);
