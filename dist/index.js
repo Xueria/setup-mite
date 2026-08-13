@@ -18871,6 +18871,9 @@ function issueCommand(command, properties, message) {
   const cmd = new Command(command, properties, message);
   process.stdout.write(cmd.toString() + os.EOL);
 }
+function issue(name, message = "") {
+  issueCommand(name, {}, message);
+}
 var CMD_STRING = "::";
 var Command = class {
   constructor(command, properties, message) {
@@ -19292,8 +19295,17 @@ function setFailed(message) {
 function error(message, properties = {}) {
   issueCommand("error", toCommandProperties(properties), message instanceof Error ? message.toString() : message);
 }
+function warning(message, properties = {}) {
+  issueCommand("warning", toCommandProperties(properties), message instanceof Error ? message.toString() : message);
+}
 function info(message) {
   process.stdout.write(message + os3.EOL);
+}
+function startGroup(name) {
+  issue("group", name);
+}
+function endGroup() {
+  issue("endgroup");
 }
 
 // src/setup.ts
@@ -19319,6 +19331,7 @@ function download(url, dest) {
   return new Promise((resolve, reject) => {
     const file = import_fs2.default.createWriteStream(dest);
     let settled = false;
+    info(`Downloading ${url} -> ${dest}`);
     const fail = (err) => {
       if (settled) return;
       settled = true;
@@ -19373,13 +19386,17 @@ function sizeof(url) {
         response.resume();
         const remoteSize = Number(response.headers["content-length"]);
         if (!Number.isFinite(remoteSize)) {
+          warning(`No content-length from ${url2}, will download`);
           return resolve(0);
         }
         info(`Remote file size: ${remoteSize}`);
         return resolve(remoteSize);
       });
       req.on("timeout", () => req.destroy());
-      req.on("error", () => resolve(0));
+      req.on("error", () => {
+        warning(`Failed to query size of ${url2}, will download`);
+        resolve(0);
+      });
       req.end();
     };
     request(url, MAX_REDIRECT_DEPTH);
@@ -19392,10 +19409,11 @@ async function setup(options) {
   const temp = `${dest}.temp`;
   import_fs3.default.mkdirSync(import_path.default.dirname(dest), { recursive: true });
   if (import_fs3.default.existsSync(dest) && import_fs3.default.statSync(dest).size === await sizeof(options.url)) {
+    info(`Cache hit: ${dest} (size matches remote)`);
     return dest;
   }
   await download(options.url, temp);
-  info("download success");
+  info("Download success!");
   import_fs3.default.rmSync(dest, { force: true });
   import_fs3.default.renameSync(temp, dest);
   return dest;
@@ -19413,8 +19431,10 @@ async function run() {
     version: INPUT_MITE_VERSION,
     gradle: gradleUserHome
   };
+  startGroup("setup mite");
   const dest = await setup(options);
   info(`File is ready at ${dest}`);
+  endGroup();
 }
 run().catch((err) => {
   setFailed(err instanceof Error ? err.message : String(err));
