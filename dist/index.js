@@ -40,7 +40,7 @@ var require_tunnel = __commonJS({
     "use strict";
     var net = require("net");
     var tls = require("tls");
-    var http = require("http");
+    var http2 = require("http");
     var https2 = require("https");
     var events = require("events");
     var assert = require("assert");
@@ -51,12 +51,12 @@ var require_tunnel = __commonJS({
     exports2.httpsOverHttps = httpsOverHttps2;
     function httpOverHttp2(options) {
       var agent = new TunnelingAgent(options);
-      agent.request = http.request;
+      agent.request = http2.request;
       return agent;
     }
     function httpsOverHttp2(options) {
       var agent = new TunnelingAgent(options);
-      agent.request = http.request;
+      agent.request = http2.request;
       agent.createSocket = createSecureSocket;
       agent.defaultPort = 443;
       return agent;
@@ -77,7 +77,7 @@ var require_tunnel = __commonJS({
       var self = this;
       self.options = options || {};
       self.proxyOptions = self.options.proxy || {};
-      self.maxSockets = self.options.maxSockets || http.Agent.defaultMaxSockets;
+      self.maxSockets = self.options.maxSockets || http2.Agent.defaultMaxSockets;
       self.requests = [];
       self.sockets = [];
       self.on("free", function onFree(socket, host, port, localAddress) {
@@ -1382,12 +1382,12 @@ var require_util = __commonJS({
       }
       obj[kListeners] = null;
     }
-    function errorRequest(client, request, err) {
+    function errorRequest(client2, request, err) {
       try {
         request.onError(err);
         assert(request.aborted);
       } catch (err2) {
-        client.emit("error", err2);
+        client2.emit("error", err2);
       }
     }
     var kEnumerableProperty = /* @__PURE__ */ Object.create(null);
@@ -5792,11 +5792,11 @@ var require_client_h1 = __commonJS({
     var TIMEOUT_BODY = 4 | USE_FAST_TIMER;
     var TIMEOUT_KEEP_ALIVE = 8 | USE_NATIVE_TIMER;
     var Parser = class {
-      constructor(client, socket, { exports: exports3 }) {
-        assert(Number.isFinite(client[kMaxHeadersSize]) && client[kMaxHeadersSize] > 0);
+      constructor(client2, socket, { exports: exports3 }) {
+        assert(Number.isFinite(client2[kMaxHeadersSize]) && client2[kMaxHeadersSize] > 0);
         this.llhttp = exports3;
         this.ptr = this.llhttp.llhttp_alloc(constants3.TYPE.RESPONSE);
-        this.client = client;
+        this.client = client2;
         this.socket = socket;
         this.timeout = null;
         this.timeoutValue = null;
@@ -5806,7 +5806,7 @@ var require_client_h1 = __commonJS({
         this.upgrade = false;
         this.headers = [];
         this.headersSize = 0;
-        this.headersMaxSize = client[kMaxHeadersSize];
+        this.headersMaxSize = client2[kMaxHeadersSize];
         this.shouldKeepAlive = false;
         this.paused = false;
         this.resume = this.resume.bind(this);
@@ -5814,7 +5814,7 @@ var require_client_h1 = __commonJS({
         this.keepAlive = "";
         this.contentLength = "";
         this.connection = "";
-        this.maxResponseSize = client[kMaxResponseSize];
+        this.maxResponseSize = client2[kMaxResponseSize];
       }
       setTimeout(delay, type) {
         if (delay !== this.timeoutValue || type & USE_FAST_TIMER ^ this.timeoutType & USE_FAST_TIMER) {
@@ -5954,15 +5954,15 @@ var require_client_h1 = __commonJS({
         this.statusText = buf.toString();
       }
       onMessageBegin() {
-        const { socket, client } = this;
+        const { socket, client: client2 } = this;
         if (socket.destroyed) {
           return -1;
         }
-        if (client[kRunning] === 0) {
+        if (client2[kRunning] === 0) {
           util.destroy(socket, new SocketError("bad response", util.getSocketInfo(socket)));
           return -1;
         }
-        const request = client[kQueue][client[kRunningIdx]];
+        const request = client2[kQueue][client2[kRunningIdx]];
         if (!request) {
           return -1;
         }
@@ -6005,13 +6005,13 @@ var require_client_h1 = __commonJS({
         }
       }
       onUpgrade(head) {
-        const { upgrade, client, socket, headers, statusCode } = this;
+        const { upgrade, client: client2, socket, headers, statusCode } = this;
         assert(upgrade);
-        assert(client[kSocket] === socket);
+        assert(client2[kSocket] === socket);
         assert(!socket.destroyed);
         assert(!this.paused);
         assert((headers.length & 1) === 0);
-        const request = client[kQueue][client[kRunningIdx]];
+        const request = client2[kQueue][client2[kRunningIdx]];
         assert(request);
         assert(request.upgrade || request.method === "CONNECT");
         this.statusCode = null;
@@ -6025,27 +6025,27 @@ var require_client_h1 = __commonJS({
         socket[kClient] = null;
         socket[kError] = null;
         removeAllListeners(socket);
-        client[kSocket] = null;
-        client[kHTTPContext] = null;
-        client[kQueue][client[kRunningIdx]++] = null;
-        client.emit("disconnect", client[kUrl], [client], new InformationalError("upgrade"));
+        client2[kSocket] = null;
+        client2[kHTTPContext] = null;
+        client2[kQueue][client2[kRunningIdx]++] = null;
+        client2.emit("disconnect", client2[kUrl], [client2], new InformationalError("upgrade"));
         try {
           request.onUpgrade(statusCode, headers, socket);
         } catch (err) {
           util.destroy(socket, err);
         }
-        client[kResume]();
+        client2[kResume]();
       }
       onHeadersComplete(statusCode, upgrade, shouldKeepAlive) {
-        const { client, socket, headers, statusText } = this;
+        const { client: client2, socket, headers, statusText } = this;
         if (socket.destroyed) {
           return -1;
         }
-        if (client[kRunning] === 0) {
+        if (client2[kRunning] === 0) {
           util.destroy(socket, new SocketError("bad response", util.getSocketInfo(socket)));
           return -1;
         }
-        const request = client[kQueue][client[kRunningIdx]];
+        const request = client2[kQueue][client2[kRunningIdx]];
         if (!request) {
           return -1;
         }
@@ -6064,7 +6064,7 @@ var require_client_h1 = __commonJS({
         this.shouldKeepAlive = shouldKeepAlive || // Override llhttp value which does not allow keepAlive for HEAD.
         request.method === "HEAD" && !socket[kReset] && this.connection.toLowerCase() === "keep-alive";
         if (this.statusCode >= 200) {
-          const bodyTimeout = request.bodyTimeout != null ? request.bodyTimeout : client[kBodyTimeout];
+          const bodyTimeout = request.bodyTimeout != null ? request.bodyTimeout : client2[kBodyTimeout];
           this.setTimeout(bodyTimeout, TIMEOUT_BODY);
         } else if (this.timeout) {
           if (this.timeout.refresh) {
@@ -6072,32 +6072,32 @@ var require_client_h1 = __commonJS({
           }
         }
         if (request.method === "CONNECT") {
-          assert(client[kRunning] === 1);
+          assert(client2[kRunning] === 1);
           this.upgrade = true;
           return 2;
         }
         if (upgrade) {
-          assert(client[kRunning] === 1);
+          assert(client2[kRunning] === 1);
           this.upgrade = true;
           return 2;
         }
         assert((this.headers.length & 1) === 0);
         this.headers = [];
         this.headersSize = 0;
-        if (this.shouldKeepAlive && client[kPipelining]) {
+        if (this.shouldKeepAlive && client2[kPipelining]) {
           const keepAliveTimeout = this.keepAlive ? util.parseKeepAliveTimeout(this.keepAlive) : null;
           if (keepAliveTimeout != null) {
             const timeout = Math.min(
-              keepAliveTimeout - client[kKeepAliveTimeoutThreshold],
-              client[kKeepAliveMaxTimeout]
+              keepAliveTimeout - client2[kKeepAliveTimeoutThreshold],
+              client2[kKeepAliveMaxTimeout]
             );
             if (timeout <= 0) {
               socket[kReset] = true;
             } else {
-              client[kKeepAliveTimeoutValue] = timeout;
+              client2[kKeepAliveTimeoutValue] = timeout;
             }
           } else {
-            client[kKeepAliveTimeoutValue] = client[kKeepAliveDefaultTimeout];
+            client2[kKeepAliveTimeoutValue] = client2[kKeepAliveDefaultTimeout];
           }
         } else {
           socket[kReset] = true;
@@ -6114,16 +6114,16 @@ var require_client_h1 = __commonJS({
         }
         if (socket[kBlocking]) {
           socket[kBlocking] = false;
-          client[kResume]();
+          client2[kResume]();
         }
         return pause ? constants3.ERROR.PAUSED : 0;
       }
       onBody(buf) {
-        const { client, socket, statusCode, maxResponseSize } = this;
+        const { client: client2, socket, statusCode, maxResponseSize } = this;
         if (socket.destroyed) {
           return -1;
         }
-        const request = client[kQueue][client[kRunningIdx]];
+        const request = client2[kQueue][client2[kRunningIdx]];
         assert(request);
         assert(this.timeoutType === TIMEOUT_BODY);
         if (this.timeout) {
@@ -6142,7 +6142,7 @@ var require_client_h1 = __commonJS({
         }
       }
       onMessageComplete() {
-        const { client, socket, statusCode, upgrade, headers, contentLength, bytesRead, shouldKeepAlive } = this;
+        const { client: client2, socket, statusCode, upgrade, headers, contentLength, bytesRead, shouldKeepAlive } = this;
         if (socket.destroyed && (!statusCode || shouldKeepAlive)) {
           return -1;
         }
@@ -6151,7 +6151,7 @@ var require_client_h1 = __commonJS({
         }
         assert(statusCode >= 100);
         assert((this.headers.length & 1) === 0);
-        const request = client[kQueue][client[kRunningIdx]];
+        const request = client2[kQueue][client2[kRunningIdx]];
         assert(request);
         this.statusCode = null;
         this.statusText = "";
@@ -6169,29 +6169,29 @@ var require_client_h1 = __commonJS({
           return -1;
         }
         request.onComplete(headers);
-        client[kQueue][client[kRunningIdx]++] = null;
+        client2[kQueue][client2[kRunningIdx]++] = null;
         socket[kSocketUsed] = true;
         if (socket[kWriting]) {
-          assert(client[kRunning] === 0);
+          assert(client2[kRunning] === 0);
           util.destroy(socket, new InformationalError("reset"));
           return constants3.ERROR.PAUSED;
         } else if (!shouldKeepAlive) {
           util.destroy(socket, new InformationalError("reset"));
           return constants3.ERROR.PAUSED;
-        } else if (socket[kReset] && client[kRunning] === 0) {
+        } else if (socket[kReset] && client2[kRunning] === 0) {
           util.destroy(socket, new InformationalError("reset"));
           return constants3.ERROR.PAUSED;
-        } else if (client[kPipelining] == null || client[kPipelining] === 1) {
-          setImmediate(() => client[kResume]());
+        } else if (client2[kPipelining] == null || client2[kPipelining] === 1) {
+          setImmediate(() => client2[kResume]());
         } else {
-          client[kResume]();
+          client2[kResume]();
         }
       }
     };
     function onParserTimeout(parser) {
-      const { socket, timeoutType, client, paused } = parser.deref();
+      const { socket, timeoutType, client: client2, paused } = parser.deref();
       if (timeoutType === TIMEOUT_HEADERS) {
-        if (!socket[kWriting] || socket.writableNeedDrain || client[kRunning] > 1) {
+        if (!socket[kWriting] || socket.writableNeedDrain || client2[kRunning] > 1) {
           assert(!paused, "cannot be paused while waiting for headers");
           util.destroy(socket, new HeadersTimeoutError());
         }
@@ -6200,12 +6200,12 @@ var require_client_h1 = __commonJS({
           util.destroy(socket, new BodyTimeoutError());
         }
       } else if (timeoutType === TIMEOUT_KEEP_ALIVE) {
-        assert(client[kRunning] === 0 && client[kKeepAliveTimeoutValue]);
+        assert(client2[kRunning] === 0 && client2[kKeepAliveTimeoutValue]);
         util.destroy(socket, new InformationalError("socket idle timeout"));
       }
     }
-    async function connectH1(client, socket) {
-      client[kSocket] = socket;
+    async function connectH1(client2, socket) {
+      client2[kSocket] = socket;
       if (!llhttpInstance) {
         llhttpInstance = await llhttpPromise;
         llhttpPromise = null;
@@ -6217,7 +6217,7 @@ var require_client_h1 = __commonJS({
       socket[kIdleSocketValidation] = 0;
       socket[kIdleSocketValidationTimeout] = null;
       socket[kSocketUsed] = false;
-      socket[kParser] = new Parser(client, socket, llhttpInstance);
+      socket[kParser] = new Parser(client2, socket, llhttpInstance);
       addListener(socket, "error", function(err) {
         assert(err.code !== "ERR_TLS_CERT_ALTNAME_INVALID");
         const parser = this[kParser];
@@ -6250,7 +6250,7 @@ var require_client_h1 = __commonJS({
         util.destroy(this, new SocketError("other side closed", util.getSocketInfo(this)));
       });
       addListener(socket, "close", function() {
-        const client2 = this[kClient];
+        const client3 = this[kClient];
         const parser = this[kParser];
         clearIdleSocketValidation(this);
         if (parser) {
@@ -6261,24 +6261,24 @@ var require_client_h1 = __commonJS({
           this[kParser] = null;
         }
         const err = this[kError] || new SocketError("closed", util.getSocketInfo(this));
-        client2[kSocket] = null;
-        client2[kHTTPContext] = null;
-        if (client2.destroyed) {
-          assert(client2[kPending] === 0);
-          const requests = client2[kQueue].splice(client2[kRunningIdx]);
+        client3[kSocket] = null;
+        client3[kHTTPContext] = null;
+        if (client3.destroyed) {
+          assert(client3[kPending] === 0);
+          const requests = client3[kQueue].splice(client3[kRunningIdx]);
           for (let i = 0; i < requests.length; i++) {
             const request = requests[i];
-            util.errorRequest(client2, request, err);
+            util.errorRequest(client3, request, err);
           }
-        } else if (client2[kRunning] > 0 && err.code !== "UND_ERR_INFO") {
-          const request = client2[kQueue][client2[kRunningIdx]];
-          client2[kQueue][client2[kRunningIdx]++] = null;
-          util.errorRequest(client2, request, err);
+        } else if (client3[kRunning] > 0 && err.code !== "UND_ERR_INFO") {
+          const request = client3[kQueue][client3[kRunningIdx]];
+          client3[kQueue][client3[kRunningIdx]++] = null;
+          util.errorRequest(client3, request, err);
         }
-        client2[kPendingIdx] = client2[kRunningIdx];
-        assert(client2[kRunning] === 0);
-        client2.emit("disconnect", client2[kUrl], [client2], err);
-        client2[kResume]();
+        client3[kPendingIdx] = client3[kRunningIdx];
+        assert(client3[kRunning] === 0);
+        client3.emit("disconnect", client3[kUrl], [client3], err);
+        client3[kResume]();
       });
       let closed = false;
       socket.on("close", () => {
@@ -6288,10 +6288,10 @@ var require_client_h1 = __commonJS({
         version: "h1",
         defaultPipelining: 1,
         write(...args) {
-          return writeH1(client, ...args);
+          return writeH1(client2, ...args);
         },
         resume() {
-          resumeH1(client);
+          resumeH1(client2);
         },
         destroy(err, callback) {
           if (closed) {
@@ -6308,13 +6308,13 @@ var require_client_h1 = __commonJS({
             return true;
           }
           if (request) {
-            if (client[kRunning] > 0 && !request.idempotent) {
+            if (client2[kRunning] > 0 && !request.idempotent) {
               return true;
             }
-            if (client[kRunning] > 0 && (request.upgrade || request.method === "CONNECT")) {
+            if (client2[kRunning] > 0 && (request.upgrade || request.method === "CONNECT")) {
               return true;
             }
-            if (client[kRunning] > 0 && util.bodyLength(request.body) !== 0 && (util.isStream(request.body) || util.isAsyncIterable(request.body) || util.isFormDataLike(request.body))) {
+            if (client2[kRunning] > 0 && util.bodyLength(request.body) !== 0 && (util.isStream(request.body) || util.isAsyncIterable(request.body) || util.isFormDataLike(request.body))) {
               return true;
             }
           }
@@ -6329,21 +6329,21 @@ var require_client_h1 = __commonJS({
       }
       socket[kIdleSocketValidation] = 0;
     }
-    function scheduleIdleSocketValidation(client, socket) {
+    function scheduleIdleSocketValidation(client2, socket) {
       socket[kIdleSocketValidation] = 1;
       socket[kIdleSocketValidationTimeout] = setTimeout(() => {
         socket[kIdleSocketValidationTimeout] = null;
         socket[kIdleSocketValidation] = 2;
-        if (client[kSocket] === socket && !socket.destroyed) {
-          client[kResume]();
+        if (client2[kSocket] === socket && !socket.destroyed) {
+          client2[kResume]();
         }
       }, 0);
       socket[kIdleSocketValidationTimeout].unref?.();
     }
-    function resumeH1(client) {
-      const socket = client[kSocket];
+    function resumeH1(client2) {
+      const socket = client2[kSocket];
       if (socket && !socket.destroyed) {
-        if (client[kSize] === 0) {
+        if (client2[kSize] === 0) {
           if (!socket[kNoRef] && socket.unref) {
             socket.unref();
             socket[kNoRef] = true;
@@ -6352,9 +6352,9 @@ var require_client_h1 = __commonJS({
           socket.ref();
           socket[kNoRef] = false;
         }
-        if (client[kRunning] === 0 && client[kPending] > 0 && socket[kSocketUsed]) {
+        if (client2[kRunning] === 0 && client2[kPending] > 0 && socket[kSocketUsed]) {
           if (socket[kIdleSocketValidation] === 0) {
-            scheduleIdleSocketValidation(client, socket);
+            scheduleIdleSocketValidation(client2, socket);
             socket[kParser].readMore();
             if (socket.destroyed) {
               return;
@@ -6369,20 +6369,20 @@ var require_client_h1 = __commonJS({
             return;
           }
         }
-        if (client[kRunning] === 0) {
+        if (client2[kRunning] === 0) {
           socket[kParser].readMore();
           if (socket.destroyed) {
             return;
           }
         }
-        if (client[kSize] === 0) {
+        if (client2[kSize] === 0) {
           if (socket[kParser].timeoutType !== TIMEOUT_KEEP_ALIVE) {
-            socket[kParser].setTimeout(client[kKeepAliveTimeoutValue], TIMEOUT_KEEP_ALIVE);
+            socket[kParser].setTimeout(client2[kKeepAliveTimeoutValue], TIMEOUT_KEEP_ALIVE);
           }
-        } else if (client[kRunning] > 0 && socket[kParser].statusCode < 200) {
+        } else if (client2[kRunning] > 0 && socket[kParser].statusCode < 200) {
           if (socket[kParser].timeoutType !== TIMEOUT_HEADERS) {
-            const request = client[kQueue][client[kRunningIdx]];
-            const headersTimeout = request.headersTimeout != null ? request.headersTimeout : client[kHeadersTimeout];
+            const request = client2[kQueue][client2[kRunningIdx]];
+            const headersTimeout = request.headersTimeout != null ? request.headersTimeout : client2[kHeadersTimeout];
             socket[kParser].setTimeout(headersTimeout, TIMEOUT_HEADERS);
           }
         }
@@ -6391,7 +6391,7 @@ var require_client_h1 = __commonJS({
     function shouldSendContentLength(method) {
       return method !== "GET" && method !== "HEAD" && method !== "OPTIONS" && method !== "TRACE" && method !== "CONNECT";
     }
-    function writeH1(client, request) {
+    function writeH1(client2, request) {
       const { method, path: path3, host, upgrade, blocking, reset } = request;
       let { body, headers, contentLength } = request;
       const expectsPayload = method === "PUT" || method === "POST" || method === "PATCH" || method === "QUERY" || method === "PROPFIND" || method === "PROPPATCH";
@@ -6410,7 +6410,7 @@ var require_client_h1 = __commonJS({
         if (contentType) {
           const contentTypeValue = `${contentType}`;
           if (!util.isValidHeaderValue(contentTypeValue)) {
-            util.errorRequest(client, request, new InvalidArgumentError("invalid content-type header"));
+            util.errorRequest(client2, request, new InvalidArgumentError("invalid content-type header"));
             return false;
           }
           headers.push("content-type", contentTypeValue);
@@ -6428,26 +6428,26 @@ var require_client_h1 = __commonJS({
         contentLength = null;
       }
       if (shouldSendContentLength(method) && contentLength > 0 && request.contentLength !== null && request.contentLength !== contentLength) {
-        if (client[kStrictContentLength]) {
-          util.errorRequest(client, request, new RequestContentLengthMismatchError());
+        if (client2[kStrictContentLength]) {
+          util.errorRequest(client2, request, new RequestContentLengthMismatchError());
           return false;
         }
         process.emitWarning(new RequestContentLengthMismatchError());
       }
-      const socket = client[kSocket];
+      const socket = client2[kSocket];
       clearIdleSocketValidation(socket);
       const abort = (err) => {
         if (request.aborted || request.completed) {
           return;
         }
-        util.errorRequest(client, request, err || new RequestAbortedError());
+        util.errorRequest(client2, request, err || new RequestAbortedError());
         util.destroy(body);
         util.destroy(socket, new InformationalError("aborted"));
       };
       try {
         request.onConnect(abort);
       } catch (err) {
-        util.errorRequest(client, request, err);
+        util.errorRequest(client2, request, err);
       }
       if (request.aborted) {
         return false;
@@ -6461,7 +6461,7 @@ var require_client_h1 = __commonJS({
       if (reset != null) {
         socket[kReset] = reset;
       }
-      if (client[kMaxRequests] && socket[kCounter]++ >= client[kMaxRequests]) {
+      if (client2[kMaxRequests] && socket[kCounter]++ >= client2[kMaxRequests]) {
         socket[kReset] = true;
       }
       if (blocking) {
@@ -6473,13 +6473,13 @@ var require_client_h1 = __commonJS({
         header += `host: ${host}\r
 `;
       } else {
-        header += client[kHostHeader];
+        header += client2[kHostHeader];
       }
       if (upgrade) {
         header += `connection: upgrade\r
 upgrade: ${upgrade}\r
 `;
-      } else if (client[kPipelining] && !socket[kReset]) {
+      } else if (client2[kPipelining] && !socket[kReset]) {
         header += "connection: keep-alive\r\n";
       } else {
         header += "connection: close\r\n";
@@ -6503,28 +6503,28 @@ upgrade: ${upgrade}\r
         channels.sendHeaders.publish({ request, headers: header, socket });
       }
       if (!body || bodyLength === 0) {
-        writeBuffer(abort, null, client, request, socket, contentLength, header, expectsPayload);
+        writeBuffer(abort, null, client2, request, socket, contentLength, header, expectsPayload);
       } else if (util.isBuffer(body)) {
-        writeBuffer(abort, body, client, request, socket, contentLength, header, expectsPayload);
+        writeBuffer(abort, body, client2, request, socket, contentLength, header, expectsPayload);
       } else if (util.isBlobLike(body)) {
         if (typeof body.stream === "function") {
-          writeIterable(abort, body.stream(), client, request, socket, contentLength, header, expectsPayload);
+          writeIterable(abort, body.stream(), client2, request, socket, contentLength, header, expectsPayload);
         } else {
-          writeBlob(abort, body, client, request, socket, contentLength, header, expectsPayload);
+          writeBlob(abort, body, client2, request, socket, contentLength, header, expectsPayload);
         }
       } else if (util.isStream(body)) {
-        writeStream(abort, body, client, request, socket, contentLength, header, expectsPayload);
+        writeStream(abort, body, client2, request, socket, contentLength, header, expectsPayload);
       } else if (util.isIterable(body)) {
-        writeIterable(abort, body, client, request, socket, contentLength, header, expectsPayload);
+        writeIterable(abort, body, client2, request, socket, contentLength, header, expectsPayload);
       } else {
         assert(false);
       }
       return true;
     }
-    function writeStream(abort, body, client, request, socket, contentLength, header, expectsPayload) {
-      assert(contentLength !== 0 || client[kRunning] === 0, "stream body cannot be pipelined");
+    function writeStream(abort, body, client2, request, socket, contentLength, header, expectsPayload) {
+      assert(contentLength !== 0 || client2[kRunning] === 0, "stream body cannot be pipelined");
       let finished = false;
-      const writer = new AsyncWriter({ abort, socket, request, contentLength, client, expectsPayload, header });
+      const writer = new AsyncWriter({ abort, socket, request, contentLength, client: client2, expectsPayload, header });
       const onData = function(chunk) {
         if (finished) {
           return;
@@ -6559,7 +6559,7 @@ upgrade: ${upgrade}\r
           return;
         }
         finished = true;
-        assert(socket.destroyed || socket[kWriting] && client[kRunning] <= 1);
+        assert(socket.destroyed || socket[kWriting] && client2[kRunning] <= 1);
         socket.off("drain", onDrain).off("error", onFinished);
         body.removeListener("data", onData).removeListener("end", onFinished).removeListener("close", onClose);
         if (!err) {
@@ -6590,7 +6590,7 @@ upgrade: ${upgrade}\r
         setImmediate(onClose);
       }
     }
-    function writeBuffer(abort, body, client, request, socket, contentLength, header, expectsPayload) {
+    function writeBuffer(abort, body, client2, request, socket, contentLength, header, expectsPayload) {
       try {
         if (!body) {
           if (contentLength === 0) {
@@ -6616,12 +6616,12 @@ upgrade: ${upgrade}\r
           }
         }
         request.onRequestSent();
-        client[kResume]();
+        client2[kResume]();
       } catch (err) {
         abort(err);
       }
     }
-    async function writeBlob(abort, body, client, request, socket, contentLength, header, expectsPayload) {
+    async function writeBlob(abort, body, client2, request, socket, contentLength, header, expectsPayload) {
       assert(contentLength === body.size, "blob body must have content length");
       try {
         if (contentLength != null && contentLength !== body.size) {
@@ -6639,13 +6639,13 @@ upgrade: ${upgrade}\r
         if (!expectsPayload && request.reset !== false) {
           socket[kReset] = true;
         }
-        client[kResume]();
+        client2[kResume]();
       } catch (err) {
         abort(err);
       }
     }
-    async function writeIterable(abort, body, client, request, socket, contentLength, header, expectsPayload) {
-      assert(contentLength !== 0 || client[kRunning] === 0, "iterator body cannot be pipelined");
+    async function writeIterable(abort, body, client2, request, socket, contentLength, header, expectsPayload) {
+      assert(contentLength !== 0 || client2[kRunning] === 0, "iterator body cannot be pipelined");
       let callback = null;
       function onDrain() {
         if (callback) {
@@ -6663,7 +6663,7 @@ upgrade: ${upgrade}\r
         }
       });
       socket.on("close", onDrain).on("drain", onDrain);
-      const writer = new AsyncWriter({ abort, socket, request, contentLength, client, expectsPayload, header });
+      const writer = new AsyncWriter({ abort, socket, request, contentLength, client: client2, expectsPayload, header });
       try {
         for await (const chunk of body) {
           if (socket[kError]) {
@@ -6681,11 +6681,11 @@ upgrade: ${upgrade}\r
       }
     }
     var AsyncWriter = class {
-      constructor({ abort, socket, request, contentLength, client, expectsPayload, header }) {
+      constructor({ abort, socket, request, contentLength, client: client2, expectsPayload, header }) {
         this.socket = socket;
         this.request = request;
         this.contentLength = contentLength;
-        this.client = client;
+        this.client = client2;
         this.bytesWritten = 0;
         this.expectsPayload = expectsPayload;
         this.header = header;
@@ -6693,7 +6693,7 @@ upgrade: ${upgrade}\r
         socket[kWriting] = true;
       }
       write(chunk) {
-        const { socket, request, contentLength, client, bytesWritten, expectsPayload, header } = this;
+        const { socket, request, contentLength, client: client2, bytesWritten, expectsPayload, header } = this;
         if (socket[kError]) {
           throw socket[kError];
         }
@@ -6705,7 +6705,7 @@ upgrade: ${upgrade}\r
           return true;
         }
         if (contentLength !== null && bytesWritten + len > contentLength) {
-          if (client[kStrictContentLength]) {
+          if (client2[kStrictContentLength]) {
             throw new RequestContentLengthMismatchError();
           }
           process.emitWarning(new RequestContentLengthMismatchError());
@@ -6743,7 +6743,7 @@ ${len.toString(16)}\r
         return ret;
       }
       end() {
-        const { socket, contentLength, client, bytesWritten, expectsPayload, header, request } = this;
+        const { socket, contentLength, client: client2, bytesWritten, expectsPayload, header, request } = this;
         request.onRequestSent();
         socket[kWriting] = false;
         if (socket[kError]) {
@@ -6765,7 +6765,7 @@ ${len.toString(16)}\r
           socket.write("\r\n0\r\n\r\n", "latin1");
         }
         if (contentLength !== null && bytesWritten !== contentLength) {
-          if (client[kStrictContentLength]) {
+          if (client2[kStrictContentLength]) {
             throw new RequestContentLengthMismatchError();
           } else {
             process.emitWarning(new RequestContentLengthMismatchError());
@@ -6776,13 +6776,13 @@ ${len.toString(16)}\r
             socket[kParser].timeout.refresh();
           }
         }
-        client[kResume]();
+        client2[kResume]();
       }
       destroy(err) {
-        const { socket, client, abort } = this;
+        const { socket, client: client2, abort } = this;
         socket[kWriting] = false;
         if (err) {
-          assert(client[kRunning] <= 1, "pipeline should only contain this request");
+          assert(client2[kRunning] <= 1, "pipeline should only contain this request");
           abort(err);
         }
       }
@@ -6856,41 +6856,41 @@ var require_client_h2 = __commonJS({
       }
       return result;
     }
-    async function connectH2(client, socket) {
-      client[kSocket] = socket;
+    async function connectH2(client2, socket) {
+      client2[kSocket] = socket;
       if (!h2ExperimentalWarned) {
         h2ExperimentalWarned = true;
         process.emitWarning("H2 support is experimental, expect them to change at any time.", {
           code: "UNDICI-H2"
         });
       }
-      const session = http2.connect(client[kUrl], {
+      const session = http2.connect(client2[kUrl], {
         createConnection: () => socket,
-        peerMaxConcurrentStreams: client[kMaxConcurrentStreams]
+        peerMaxConcurrentStreams: client2[kMaxConcurrentStreams]
       });
       session[kOpenStreams] = 0;
-      session[kClient] = client;
+      session[kClient] = client2;
       session[kSocket] = socket;
       util.addListener(session, "error", onHttp2SessionError);
       util.addListener(session, "frameError", onHttp2FrameError);
       util.addListener(session, "end", onHttp2SessionEnd);
       util.addListener(session, "goaway", onHTTP2GoAway);
       util.addListener(session, "close", function() {
-        const { [kClient]: client2 } = this;
-        const { [kSocket]: socket2 } = client2;
+        const { [kClient]: client3 } = this;
+        const { [kSocket]: socket2 } = client3;
         const err = this[kSocket][kError] || this[kError] || new SocketError("closed", util.getSocketInfo(socket2));
-        client2[kHTTP2Session] = null;
-        if (client2.destroyed) {
-          assert(client2[kPending] === 0);
-          const requests = client2[kQueue].splice(client2[kRunningIdx]);
+        client3[kHTTP2Session] = null;
+        if (client3.destroyed) {
+          assert(client3[kPending] === 0);
+          const requests = client3[kQueue].splice(client3[kRunningIdx]);
           for (let i = 0; i < requests.length; i++) {
             const request = requests[i];
-            util.errorRequest(client2, request, err);
+            util.errorRequest(client3, request, err);
           }
         }
       });
       session.unref();
-      client[kHTTP2Session] = session;
+      client2[kHTTP2Session] = session;
       socket[kHTTP2Session] = session;
       util.addListener(socket, "error", function(err) {
         assert(err.code !== "ERR_TLS_CERT_ALTNAME_INVALID");
@@ -6902,14 +6902,14 @@ var require_client_h2 = __commonJS({
       });
       util.addListener(socket, "close", function() {
         const err = this[kError] || new SocketError("closed", util.getSocketInfo(this));
-        client[kSocket] = null;
+        client2[kSocket] = null;
         if (this[kHTTP2Session] != null) {
           this[kHTTP2Session].destroy(err);
         }
-        client[kPendingIdx] = client[kRunningIdx];
-        assert(client[kRunning] === 0);
-        client.emit("disconnect", client[kUrl], [client], err);
-        client[kResume]();
+        client2[kPendingIdx] = client2[kRunningIdx];
+        assert(client2[kRunning] === 0);
+        client2.emit("disconnect", client2[kUrl], [client2], err);
+        client2[kResume]();
       });
       let closed = false;
       socket.on("close", () => {
@@ -6919,10 +6919,10 @@ var require_client_h2 = __commonJS({
         version: "h2",
         defaultPipelining: Infinity,
         write(...args) {
-          return writeH2(client, ...args);
+          return writeH2(client2, ...args);
         },
         resume() {
-          resumeH2(client);
+          resumeH2(client2);
         },
         destroy(err, callback) {
           if (closed) {
@@ -6939,15 +6939,15 @@ var require_client_h2 = __commonJS({
         }
       };
     }
-    function resumeH2(client) {
-      const socket = client[kSocket];
+    function resumeH2(client2) {
+      const socket = client2[kSocket];
       if (socket?.destroyed === false) {
-        if (client[kSize] === 0 && client[kMaxConcurrentStreams] === 0) {
+        if (client2[kSize] === 0 && client2[kMaxConcurrentStreams] === 0) {
           socket.unref();
-          client[kHTTP2Session].unref();
+          client2[kHTTP2Session].unref();
         } else {
           socket.ref();
-          client[kHTTP2Session].ref();
+          client2[kHTTP2Session].ref();
         }
       }
     }
@@ -6970,33 +6970,33 @@ var require_client_h2 = __commonJS({
     }
     function onHTTP2GoAway(code) {
       const err = this[kError] || new SocketError(`HTTP/2: "GOAWAY" frame received with code ${code}`, util.getSocketInfo(this));
-      const client = this[kClient];
-      client[kSocket] = null;
-      client[kHTTPContext] = null;
+      const client2 = this[kClient];
+      client2[kSocket] = null;
+      client2[kHTTPContext] = null;
       if (this[kHTTP2Session] != null) {
         this[kHTTP2Session].destroy(err);
         this[kHTTP2Session] = null;
       }
       util.destroy(this[kSocket], err);
-      if (client[kRunningIdx] < client[kQueue].length) {
-        const request = client[kQueue][client[kRunningIdx]];
-        client[kQueue][client[kRunningIdx]++] = null;
-        util.errorRequest(client, request, err);
-        client[kPendingIdx] = client[kRunningIdx];
+      if (client2[kRunningIdx] < client2[kQueue].length) {
+        const request = client2[kQueue][client2[kRunningIdx]];
+        client2[kQueue][client2[kRunningIdx]++] = null;
+        util.errorRequest(client2, request, err);
+        client2[kPendingIdx] = client2[kRunningIdx];
       }
-      assert(client[kRunning] === 0);
-      client.emit("disconnect", client[kUrl], [client], err);
-      client[kResume]();
+      assert(client2[kRunning] === 0);
+      client2.emit("disconnect", client2[kUrl], [client2], err);
+      client2[kResume]();
     }
     function shouldSendContentLength(method) {
       return method !== "GET" && method !== "HEAD" && method !== "OPTIONS" && method !== "TRACE" && method !== "CONNECT";
     }
-    function writeH2(client, request) {
-      const session = client[kHTTP2Session];
+    function writeH2(client2, request) {
+      const session = client2[kHTTP2Session];
       const { method, path: path3, host, upgrade, expectContinue, signal, headers: reqHeaders } = request;
       let { body } = request;
       if (upgrade) {
-        util.errorRequest(client, request, new Error("Upgrade not supported for H2"));
+        util.errorRequest(client2, request, new Error("Upgrade not supported for H2"));
         return false;
       }
       const headers = {};
@@ -7016,7 +7016,7 @@ var require_client_h2 = __commonJS({
         }
       }
       let stream;
-      const { hostname, port } = client[kUrl];
+      const { hostname, port } = client2[kUrl];
       headers[HTTP2_HEADER_AUTHORITY] = host || `${hostname}${port ? `:${port}` : ""}`;
       headers[HTTP2_HEADER_METHOD] = method;
       const abort = (err) => {
@@ -7024,18 +7024,18 @@ var require_client_h2 = __commonJS({
           return;
         }
         err = err || new RequestAbortedError();
-        util.errorRequest(client, request, err);
+        util.errorRequest(client2, request, err);
         if (stream != null) {
           util.destroy(stream, err);
         }
         util.destroy(body, err);
-        client[kQueue][client[kRunningIdx]++] = null;
-        client[kResume]();
+        client2[kQueue][client2[kRunningIdx]++] = null;
+        client2[kResume]();
       };
       try {
         request.onConnect(abort);
       } catch (err) {
-        util.errorRequest(client, request, err);
+        util.errorRequest(client2, request, err);
       }
       if (request.aborted) {
         return false;
@@ -7046,12 +7046,12 @@ var require_client_h2 = __commonJS({
         if (stream.id && !stream.pending) {
           request.onUpgrade(null, null, stream);
           ++session[kOpenStreams];
-          client[kQueue][client[kRunningIdx]++] = null;
+          client2[kQueue][client2[kRunningIdx]++] = null;
         } else {
           stream.once("ready", () => {
             request.onUpgrade(null, null, stream);
             ++session[kOpenStreams];
-            client[kQueue][client[kRunningIdx]++] = null;
+            client2[kQueue][client2[kRunningIdx]++] = null;
           });
         }
         stream.once("close", () => {
@@ -7081,8 +7081,8 @@ var require_client_h2 = __commonJS({
         contentLength = null;
       }
       if (shouldSendContentLength(method) && contentLength > 0 && request.contentLength != null && request.contentLength !== contentLength) {
-        if (client[kStrictContentLength]) {
-          util.errorRequest(client, request, new RequestContentLengthMismatchError());
+        if (client2[kStrictContentLength]) {
+          util.errorRequest(client2, request, new RequestContentLengthMismatchError());
           return false;
         }
         process.emitWarning(new RequestContentLengthMismatchError());
@@ -7110,7 +7110,7 @@ var require_client_h2 = __commonJS({
         request.onResponseStarted();
         if (request.aborted) {
           const err = new RequestAbortedError();
-          util.errorRequest(client, request, err);
+          util.errorRequest(client2, request, err);
           util.destroy(stream, err);
           return;
         }
@@ -7131,9 +7131,9 @@ var require_client_h2 = __commonJS({
           session.unref();
         }
         abort(new InformationalError("HTTP/2: stream half-closed (remote)"));
-        client[kQueue][client[kRunningIdx]++] = null;
-        client[kPendingIdx] = client[kRunningIdx];
-        client[kResume]();
+        client2[kQueue][client2[kRunningIdx]++] = null;
+        client2[kPendingIdx] = client2[kRunningIdx];
+        client2[kResume]();
       });
       stream.once("close", () => {
         session[kOpenStreams] -= 1;
@@ -7154,9 +7154,9 @@ var require_client_h2 = __commonJS({
             abort,
             stream,
             null,
-            client,
+            client2,
             request,
-            client[kSocket],
+            client2[kSocket],
             contentLength,
             expectsPayload
           );
@@ -7165,9 +7165,9 @@ var require_client_h2 = __commonJS({
             abort,
             stream,
             body,
-            client,
+            client2,
             request,
-            client[kSocket],
+            client2[kSocket],
             contentLength,
             expectsPayload
           );
@@ -7177,9 +7177,9 @@ var require_client_h2 = __commonJS({
               abort,
               stream,
               body.stream(),
-              client,
+              client2,
               request,
-              client[kSocket],
+              client2[kSocket],
               contentLength,
               expectsPayload
             );
@@ -7188,9 +7188,9 @@ var require_client_h2 = __commonJS({
               abort,
               stream,
               body,
-              client,
+              client2,
               request,
-              client[kSocket],
+              client2[kSocket],
               contentLength,
               expectsPayload
             );
@@ -7198,11 +7198,11 @@ var require_client_h2 = __commonJS({
         } else if (util.isStream(body)) {
           writeStream(
             abort,
-            client[kSocket],
+            client2[kSocket],
             expectsPayload,
             stream,
             body,
-            client,
+            client2,
             request,
             contentLength
           );
@@ -7211,9 +7211,9 @@ var require_client_h2 = __commonJS({
             abort,
             stream,
             body,
-            client,
+            client2,
             request,
-            client[kSocket],
+            client2[kSocket],
             contentLength,
             expectsPayload
           );
@@ -7222,7 +7222,7 @@ var require_client_h2 = __commonJS({
         }
       }
     }
-    function writeBuffer(abort, h2stream, body, client, request, socket, contentLength, expectsPayload) {
+    function writeBuffer(abort, h2stream, body, client2, request, socket, contentLength, expectsPayload) {
       try {
         if (body != null && util.isBuffer(body)) {
           assert(contentLength === body.byteLength, "buffer body must have content length");
@@ -7236,13 +7236,13 @@ var require_client_h2 = __commonJS({
           socket[kReset] = true;
         }
         request.onRequestSent();
-        client[kResume]();
+        client2[kResume]();
       } catch (error2) {
         abort(error2);
       }
     }
-    function writeStream(abort, socket, expectsPayload, h2stream, body, client, request, contentLength) {
-      assert(contentLength !== 0 || client[kRunning] === 0, "stream body cannot be pipelined");
+    function writeStream(abort, socket, expectsPayload, h2stream, body, client2, request, contentLength) {
+      assert(contentLength !== 0 || client2[kRunning] === 0, "stream body cannot be pipelined");
       const pipe = pipeline(
         body,
         h2stream,
@@ -7256,7 +7256,7 @@ var require_client_h2 = __commonJS({
             if (!expectsPayload) {
               socket[kReset] = true;
             }
-            client[kResume]();
+            client2[kResume]();
           }
         }
       );
@@ -7265,7 +7265,7 @@ var require_client_h2 = __commonJS({
         request.onBodySent(chunk);
       }
     }
-    async function writeBlob(abort, h2stream, body, client, request, socket, contentLength, expectsPayload) {
+    async function writeBlob(abort, h2stream, body, client2, request, socket, contentLength, expectsPayload) {
       assert(contentLength === body.size, "blob body must have content length");
       try {
         if (contentLength != null && contentLength !== body.size) {
@@ -7281,13 +7281,13 @@ var require_client_h2 = __commonJS({
         if (!expectsPayload) {
           socket[kReset] = true;
         }
-        client[kResume]();
+        client2[kResume]();
       } catch (err) {
         abort(err);
       }
     }
-    async function writeIterable(abort, h2stream, body, client, request, socket, contentLength, expectsPayload) {
-      assert(contentLength !== 0 || client[kRunning] === 0, "iterator body cannot be pipelined");
+    async function writeIterable(abort, h2stream, body, client2, request, socket, contentLength, expectsPayload) {
+      assert(contentLength !== 0 || client2[kRunning] === 0, "iterator body cannot be pipelined");
       let callback = null;
       function onDrain() {
         if (callback) {
@@ -7321,7 +7321,7 @@ var require_client_h2 = __commonJS({
         if (!expectsPayload) {
           socket[kReset] = true;
         }
-        client[kResume]();
+        client2[kResume]();
       } catch (err) {
         abort(err);
       } finally {
@@ -7519,7 +7519,7 @@ var require_client = __commonJS({
     "use strict";
     var assert = require("node:assert");
     var net = require("node:net");
-    var http = require("node:http");
+    var http2 = require("node:http");
     var util = require_util();
     var { channels } = require_diagnostics();
     var Request = require_request();
@@ -7578,8 +7578,8 @@ var require_client = __commonJS({
     var kClosedResolve = /* @__PURE__ */ Symbol("kClosedResolve");
     var noop = () => {
     };
-    function getPipelining(client) {
-      return client[kPipelining] ?? client[kHTTPContext]?.defaultPipelining ?? 1;
+    function getPipelining(client2) {
+      return client2[kPipelining] ?? client2[kHTTPContext]?.defaultPipelining ?? 1;
     }
     var Client = class extends DispatcherBase {
       /**
@@ -7707,7 +7707,7 @@ var require_client = __commonJS({
         this[kUrl] = util.parseOrigin(url);
         this[kConnector] = connect2;
         this[kPipelining] = pipelining != null ? pipelining : 1;
-        this[kMaxHeadersSize] = maxHeaderSize || http.maxHeaderSize;
+        this[kMaxHeadersSize] = maxHeaderSize || http2.maxHeaderSize;
         this[kKeepAliveDefaultTimeout] = keepAliveTimeout == null ? 4e3 : keepAliveTimeout;
         this[kKeepAliveMaxTimeout] = keepAliveMaxTimeout == null ? 6e5 : keepAliveMaxTimeout;
         this[kKeepAliveTimeoutThreshold] = keepAliveTimeoutThreshold == null ? 2e3 : keepAliveTimeoutThreshold;
@@ -7812,21 +7812,21 @@ var require_client = __commonJS({
       }
     };
     var createRedirectInterceptor = require_redirect_interceptor();
-    function onError(client, err) {
-      if (client[kRunning] === 0 && err.code !== "UND_ERR_INFO" && err.code !== "UND_ERR_SOCKET") {
-        assert(client[kPendingIdx] === client[kRunningIdx]);
-        const requests = client[kQueue].splice(client[kRunningIdx]);
+    function onError(client2, err) {
+      if (client2[kRunning] === 0 && err.code !== "UND_ERR_INFO" && err.code !== "UND_ERR_SOCKET") {
+        assert(client2[kPendingIdx] === client2[kRunningIdx]);
+        const requests = client2[kQueue].splice(client2[kRunningIdx]);
         for (let i = 0; i < requests.length; i++) {
           const request = requests[i];
-          util.errorRequest(client, request, err);
+          util.errorRequest(client2, request, err);
         }
-        assert(client[kSize] === 0);
+        assert(client2[kSize] === 0);
       }
     }
-    async function connect(client) {
-      assert(!client[kConnecting]);
-      assert(!client[kHTTPContext]);
-      let { host, hostname, protocol, port } = client[kUrl];
+    async function connect(client2) {
+      assert(!client2[kConnecting]);
+      assert(!client2[kHTTPContext]);
+      let { host, hostname, protocol, port } = client2[kUrl];
       if (hostname[0] === "[") {
         const idx = hostname.indexOf("]");
         assert(idx !== -1);
@@ -7834,7 +7834,7 @@ var require_client = __commonJS({
         assert(net.isIP(ip));
         hostname = ip;
       }
-      client[kConnecting] = true;
+      client2[kConnecting] = true;
       if (channels.beforeConnect.hasSubscribers) {
         channels.beforeConnect.publish({
           connectParams: {
@@ -7842,22 +7842,22 @@ var require_client = __commonJS({
             hostname,
             protocol,
             port,
-            version: client[kHTTPContext]?.version,
-            servername: client[kServerName],
-            localAddress: client[kLocalAddress]
+            version: client2[kHTTPContext]?.version,
+            servername: client2[kServerName],
+            localAddress: client2[kLocalAddress]
           },
-          connector: client[kConnector]
+          connector: client2[kConnector]
         });
       }
       try {
         const socket = await new Promise((resolve, reject) => {
-          client[kConnector]({
+          client2[kConnector]({
             host,
             hostname,
             protocol,
             port,
-            servername: client[kServerName],
-            localAddress: client[kLocalAddress]
+            servername: client2[kServerName],
+            localAddress: client2[kLocalAddress]
           }, (err, socket2) => {
             if (err) {
               reject(err);
@@ -7866,21 +7866,21 @@ var require_client = __commonJS({
             }
           });
         });
-        if (client.destroyed) {
+        if (client2.destroyed) {
           util.destroy(socket.on("error", noop), new ClientDestroyedError());
           return;
         }
         assert(socket);
         try {
-          client[kHTTPContext] = socket.alpnProtocol === "h2" ? await connectH2(client, socket) : await connectH1(client, socket);
+          client2[kHTTPContext] = socket.alpnProtocol === "h2" ? await connectH2(client2, socket) : await connectH1(client2, socket);
         } catch (err) {
           socket.destroy().on("error", noop);
           throw err;
         }
-        client[kConnecting] = false;
+        client2[kConnecting] = false;
         socket[kCounter] = 0;
-        socket[kMaxRequests] = client[kMaxRequests];
-        socket[kClient] = client;
+        socket[kMaxRequests] = client2[kMaxRequests];
+        socket[kClient] = client2;
         socket[kError] = null;
         if (channels.connected.hasSubscribers) {
           channels.connected.publish({
@@ -7889,20 +7889,20 @@ var require_client = __commonJS({
               hostname,
               protocol,
               port,
-              version: client[kHTTPContext]?.version,
-              servername: client[kServerName],
-              localAddress: client[kLocalAddress]
+              version: client2[kHTTPContext]?.version,
+              servername: client2[kServerName],
+              localAddress: client2[kLocalAddress]
             },
-            connector: client[kConnector],
+            connector: client2[kConnector],
             socket
           });
         }
-        client.emit("connect", client[kUrl], [client]);
+        client2.emit("connect", client2[kUrl], [client2]);
       } catch (err) {
-        if (client.destroyed) {
+        if (client2.destroyed) {
           return;
         }
-        client[kConnecting] = false;
+        client2[kConnecting] = false;
         if (channels.connectError.hasSubscribers) {
           channels.connectError.publish({
             connectParams: {
@@ -7910,103 +7910,103 @@ var require_client = __commonJS({
               hostname,
               protocol,
               port,
-              version: client[kHTTPContext]?.version,
-              servername: client[kServerName],
-              localAddress: client[kLocalAddress]
+              version: client2[kHTTPContext]?.version,
+              servername: client2[kServerName],
+              localAddress: client2[kLocalAddress]
             },
-            connector: client[kConnector],
+            connector: client2[kConnector],
             error: err
           });
         }
         if (err.code === "ERR_TLS_CERT_ALTNAME_INVALID") {
-          assert(client[kRunning] === 0);
-          while (client[kPending] > 0 && client[kQueue][client[kPendingIdx]].servername === client[kServerName]) {
-            const request = client[kQueue][client[kPendingIdx]++];
-            util.errorRequest(client, request, err);
+          assert(client2[kRunning] === 0);
+          while (client2[kPending] > 0 && client2[kQueue][client2[kPendingIdx]].servername === client2[kServerName]) {
+            const request = client2[kQueue][client2[kPendingIdx]++];
+            util.errorRequest(client2, request, err);
           }
         } else {
-          onError(client, err);
+          onError(client2, err);
         }
-        client.emit("connectionError", client[kUrl], [client], err);
+        client2.emit("connectionError", client2[kUrl], [client2], err);
       }
-      client[kResume]();
+      client2[kResume]();
     }
-    function emitDrain(client) {
-      client[kNeedDrain] = 0;
-      client.emit("drain", client[kUrl], [client]);
+    function emitDrain(client2) {
+      client2[kNeedDrain] = 0;
+      client2.emit("drain", client2[kUrl], [client2]);
     }
-    function resume(client, sync) {
-      if (client[kResuming] === 2) {
+    function resume(client2, sync) {
+      if (client2[kResuming] === 2) {
         return;
       }
-      client[kResuming] = 2;
-      _resume(client, sync);
-      client[kResuming] = 0;
-      if (client[kRunningIdx] > 256) {
-        client[kQueue].splice(0, client[kRunningIdx]);
-        client[kPendingIdx] -= client[kRunningIdx];
-        client[kRunningIdx] = 0;
+      client2[kResuming] = 2;
+      _resume(client2, sync);
+      client2[kResuming] = 0;
+      if (client2[kRunningIdx] > 256) {
+        client2[kQueue].splice(0, client2[kRunningIdx]);
+        client2[kPendingIdx] -= client2[kRunningIdx];
+        client2[kRunningIdx] = 0;
       }
     }
-    function _resume(client, sync) {
+    function _resume(client2, sync) {
       while (true) {
-        if (client.destroyed) {
-          assert(client[kPending] === 0);
+        if (client2.destroyed) {
+          assert(client2[kPending] === 0);
           return;
         }
-        if (client[kClosedResolve] && !client[kSize]) {
-          client[kClosedResolve]();
-          client[kClosedResolve] = null;
+        if (client2[kClosedResolve] && !client2[kSize]) {
+          client2[kClosedResolve]();
+          client2[kClosedResolve] = null;
           return;
         }
-        if (client[kHTTPContext]) {
-          client[kHTTPContext].resume();
+        if (client2[kHTTPContext]) {
+          client2[kHTTPContext].resume();
         }
-        if (client[kBusy]) {
-          client[kNeedDrain] = 2;
-        } else if (client[kNeedDrain] === 2) {
+        if (client2[kBusy]) {
+          client2[kNeedDrain] = 2;
+        } else if (client2[kNeedDrain] === 2) {
           if (sync) {
-            client[kNeedDrain] = 1;
-            queueMicrotask(() => emitDrain(client));
+            client2[kNeedDrain] = 1;
+            queueMicrotask(() => emitDrain(client2));
           } else {
-            emitDrain(client);
+            emitDrain(client2);
           }
           continue;
         }
-        if (client[kPending] === 0) {
+        if (client2[kPending] === 0) {
           return;
         }
-        if (client[kRunning] >= (getPipelining(client) || 1)) {
+        if (client2[kRunning] >= (getPipelining(client2) || 1)) {
           return;
         }
-        const request = client[kQueue][client[kPendingIdx]];
-        if (client[kUrl].protocol === "https:" && client[kServerName] !== request.servername) {
-          if (client[kRunning] > 0) {
+        const request = client2[kQueue][client2[kPendingIdx]];
+        if (client2[kUrl].protocol === "https:" && client2[kServerName] !== request.servername) {
+          if (client2[kRunning] > 0) {
             return;
           }
-          client[kServerName] = request.servername;
-          client[kHTTPContext]?.destroy(new InformationalError("servername changed"), () => {
-            client[kHTTPContext] = null;
-            resume(client);
+          client2[kServerName] = request.servername;
+          client2[kHTTPContext]?.destroy(new InformationalError("servername changed"), () => {
+            client2[kHTTPContext] = null;
+            resume(client2);
           });
         }
-        if (client[kConnecting]) {
+        if (client2[kConnecting]) {
           return;
         }
-        if (!client[kHTTPContext]) {
-          connect(client);
+        if (!client2[kHTTPContext]) {
+          connect(client2);
           return;
         }
-        if (client[kHTTPContext].destroyed) {
+        if (client2[kHTTPContext].destroyed) {
           return;
         }
-        if (client[kHTTPContext].busy(request)) {
+        if (client2[kHTTPContext].busy(request)) {
           return;
         }
-        if (!request.aborted && client[kHTTPContext].write(request)) {
-          client[kPendingIdx]++;
+        if (!request.aborted && client2[kHTTPContext].write(request)) {
+          client2[kPendingIdx]++;
         } else {
-          client[kQueue].splice(client[kPendingIdx], 1);
+          client2[kQueue].splice(client2[kPendingIdx], 1);
         }
       }
     }
@@ -8165,10 +8165,10 @@ var require_pool_base = __commonJS({
         return this[kNeedDrain];
       }
       get [kConnected]() {
-        return this[kClients].filter((client) => client[kConnected]).length;
+        return this[kClients].filter((client2) => client2[kConnected]).length;
       }
       get [kFree]() {
-        return this[kClients].filter((client) => client[kConnected] && !client[kNeedDrain]).length;
+        return this[kClients].filter((client2) => client2[kConnected] && !client2[kNeedDrain]).length;
       }
       get [kPending]() {
         let ret = this[kQueued];
@@ -8225,21 +8225,21 @@ var require_pool_base = __commonJS({
         }
         return !this[kNeedDrain];
       }
-      [kAddClient](client) {
-        client.on("drain", this[kOnDrain]).on("connect", this[kOnConnect]).on("disconnect", this[kOnDisconnect]).on("connectionError", this[kOnConnectionError]);
-        this[kClients].push(client);
+      [kAddClient](client2) {
+        client2.on("drain", this[kOnDrain]).on("connect", this[kOnConnect]).on("disconnect", this[kOnDisconnect]).on("connectionError", this[kOnConnectionError]);
+        this[kClients].push(client2);
         if (this[kNeedDrain]) {
           queueMicrotask(() => {
             if (this[kNeedDrain]) {
-              this[kOnDrain](client[kUrl], [this, client]);
+              this[kOnDrain](client2[kUrl], [this, client2]);
             }
           });
         }
         return this;
       }
-      [kRemoveClient](client) {
-        client.close(() => {
-          const idx = this[kClients].indexOf(client);
+      [kRemoveClient](client2) {
+        client2.close(() => {
+          const idx = this[kClients].indexOf(client2);
           if (idx !== -1) {
             this[kClients].splice(idx, 1);
           }
@@ -8333,9 +8333,9 @@ var require_pool = __commonJS({
         });
       }
       [kGetDispatcher]() {
-        for (const client of this[kClients]) {
-          if (!client[kNeedDrain]) {
-            return client;
+        for (const client2 of this[kClients]) {
+          if (!client2[kNeedDrain]) {
+            return client2;
           }
         }
         if (!this[kConnections] || this[kClients].length < this[kConnections]) {
@@ -8430,8 +8430,8 @@ var require_balanced_pool = __commonJS({
             this._updateBalancedPoolStats();
           }
         });
-        for (const client of this[kClients]) {
-          client[kWeight] = this[kMaxWeightPerServer];
+        for (const client2 of this[kClients]) {
+          client2[kWeight] = this[kMaxWeightPerServer];
         }
         this._updateBalancedPoolStats();
         return this;
@@ -8550,8 +8550,8 @@ var require_agent = __commonJS({
       }
       get [kRunning]() {
         let ret = 0;
-        for (const client of this[kClients].values()) {
-          ret += client[kRunning];
+        for (const client2 of this[kClients].values()) {
+          ret += client2[kRunning];
         }
         return ret;
       }
@@ -8571,16 +8571,16 @@ var require_agent = __commonJS({
       }
       async [kClose]() {
         const closePromises = [];
-        for (const client of this[kClients].values()) {
-          closePromises.push(client.close());
+        for (const client2 of this[kClients].values()) {
+          closePromises.push(client2.close());
         }
         this[kClients].clear();
         await Promise.all(closePromises);
       }
       async [kDestroy](err) {
         const destroyPromises = [];
-        for (const client of this[kClients].values()) {
-          destroyPromises.push(client.destroy(err));
+        for (const client2 of this[kClients].values()) {
+          destroyPromises.push(client2.destroy(err));
         }
         this[kClients].clear();
         await Promise.all(destroyPromises);
@@ -11245,9 +11245,9 @@ var require_mock_agent = __commonJS({
         return this[kOptions] && this[kOptions].connections === 1 ? new MockClient(origin, mockOptions) : new MockPool(origin, mockOptions);
       }
       [kMockAgentGet](origin) {
-        const client = this[kClients].get(origin);
-        if (client) {
-          return client;
+        const client2 = this[kClients].get(origin);
+        if (client2) {
+          return client2;
         }
         if (typeof origin !== "string") {
           const dispatcher = this[kFactory]("http://localhost:9999");
@@ -17051,12 +17051,12 @@ var require_connection = __commonJS({
       crypto = require("node:crypto");
     } catch {
     }
-    function establishWebSocketConnection(url, protocols, client, ws, onEstablish, options) {
+    function establishWebSocketConnection(url, protocols, client2, ws, onEstablish, options) {
       const requestURL = url;
       requestURL.protocol = url.protocol === "ws:" ? "http:" : "https:";
       const request = makeRequest({
         urlList: [requestURL],
-        client,
+        client: client2,
         serviceWorkers: "none",
         referrer: "no-referrer",
         mode: "websocket",
@@ -17832,11 +17832,11 @@ var require_websocket = __commonJS({
           throw new DOMException("Invalid Sec-WebSocket-Protocol value", "SyntaxError");
         }
         this[kWebSocketURL] = new URL(urlRecord.href);
-        const client = environmentSettingsObject.settingsObject;
+        const client2 = environmentSettingsObject.settingsObject;
         this[kController] = establishWebSocketConnection(
           urlRecord,
           protocols,
-          client,
+          client2,
           this,
           (response, extensions) => this.#onConnectionEstablished(response, extensions),
           options
@@ -19309,12 +19309,13 @@ function endGroup() {
 }
 
 // src/setup.ts
-var import_fs3 = __toESM(require("fs"));
-var import_path = __toESM(require("path"));
+var import_node_fs2 = __toESM(require("node:fs"));
+var import_node_path = __toESM(require("node:path"));
 
 // src/download.ts
-var import_fs2 = __toESM(require("fs"));
-var import_https = __toESM(require("https"));
+var import_node_fs = __toESM(require("node:fs"));
+var import_node_https = __toESM(require("node:https"));
+var http = __toESM(require("node:http"));
 var DownloadError = class extends Error {
   constructor(message, url, status) {
     super(`${message} (url: ${url}, status: ${status ?? "n/a"})`);
@@ -19325,11 +19326,22 @@ var DownloadError = class extends Error {
   url;
   status;
 };
+function client(url) {
+  const protocol = new URL(url).protocol;
+  switch (protocol) {
+    case "http:":
+      return http;
+    case "https:":
+      return import_node_https.default;
+    default:
+      throw new DownloadError(`Unsupported protocol '${protocol}'`, url);
+  }
+}
 var MAX_REDIRECT_DEPTH = 5;
 var TIMEOUT_MS = 10 * 60 * 1e3;
 function download(url, dest) {
   return new Promise((resolve, reject) => {
-    const file = import_fs2.default.createWriteStream(dest);
+    const file = import_node_fs.default.createWriteStream(dest);
     let settled = false;
     info(`Downloading ${url} -> ${dest}`);
     const fail = (err) => {
@@ -19337,7 +19349,7 @@ function download(url, dest) {
       settled = true;
       file.destroy();
       try {
-        import_fs2.default.rmSync(dest, { force: true });
+        import_node_fs.default.rmSync(dest, { force: true });
       } catch {
       }
       reject(err);
@@ -19348,20 +19360,24 @@ function download(url, dest) {
       file.close(() => resolve());
     });
     const request = (url2, redirects) => {
-      const req = import_https.default.get(url2, {
+      const req = client(url2).get(url2, {
         headers: { "User-Agent": "github-action" },
         timeout: TIMEOUT_MS
       }, (response) => {
+        response.on("error", fail);
         if (response.statusCode >= 300 && response.statusCode < 400 && response.headers.location) {
           response.resume();
           if (redirects === 0) return fail(new DownloadError("Too many redirects", url2, response.statusCode));
-          return request(new URL(response.headers.location, url2).toString(), redirects - 1);
+          try {
+            return request(new URL(response.headers.location, url2).toString(), redirects - 1);
+          } catch (err) {
+            return fail(err instanceof Error ? err : new Error(String(err)));
+          }
         }
         if (response.statusCode !== 200) {
           response.resume();
           return fail(new DownloadError("Server returned non-200", url2, response.statusCode));
         }
-        response.on("error", fail);
         response.pipe(file);
       });
       req.on("timeout", () => req.destroy(new DownloadError("request timed out", url2)));
@@ -19373,21 +19389,30 @@ function download(url, dest) {
 function sizeof(url) {
   return new Promise((resolve, reject) => {
     const request = (url2, redirects) => {
-      const req = import_https.default.request(url2, {
+      const req = client(url2).request(url2, {
         method: "HEAD",
         headers: { "User-Agent": "github-action" },
         timeout: TIMEOUT_MS
       }, (response) => {
+        response.on("error", () => resolve(-1));
         if (response.statusCode >= 300 && response.statusCode < 400 && response.headers.location) {
           response.resume();
-          if (redirects === 0) return resolve(0);
-          return request(new URL(response.headers.location, url2).toString(), redirects - 1);
+          if (redirects === 0) return resolve(-1);
+          try {
+            return request(new URL(response.headers.location, url2).toString(), redirects - 1);
+          } catch {
+            return resolve(-1);
+          }
         }
         response.resume();
+        if (response.statusCode !== 200) {
+          warning(`HEAD ${url2} returned ${response.statusCode}, will download`);
+          return resolve(-1);
+        }
         const remoteSize = Number(response.headers["content-length"]);
         if (!Number.isFinite(remoteSize)) {
           warning(`No content-length from ${url2}, will download`);
-          return resolve(0);
+          return resolve(-1);
         }
         info(`Remote file size: ${remoteSize}`);
         return resolve(remoteSize);
@@ -19395,7 +19420,7 @@ function sizeof(url) {
       req.on("timeout", () => req.destroy());
       req.on("error", () => {
         warning(`Failed to query size of ${url2}, will download`);
-        resolve(0);
+        resolve(-1);
       });
       req.end();
     };
@@ -19405,36 +19430,44 @@ function sizeof(url) {
 
 // src/setup.ts
 async function setup(options) {
-  const dest = import_path.default.join(options.gradle, "caches", "fml-loom", options.version, `${options.version}.jar`);
+  const dest = import_node_path.default.join(options.gradle, "caches", "fml-loom", options.version, `${options.version}.jar`);
   const temp = `${dest}.temp`;
-  import_fs3.default.mkdirSync(import_path.default.dirname(dest), { recursive: true });
-  if (import_fs3.default.existsSync(dest) && import_fs3.default.statSync(dest).size === await sizeof(options.url)) {
+  import_node_fs2.default.mkdirSync(import_node_path.default.dirname(dest), { recursive: true });
+  if (import_node_fs2.default.existsSync(dest) && import_node_fs2.default.statSync(dest).size === await sizeof(options.url)) {
     info(`Cache hit: ${dest} (size matches remote)`);
     return dest;
   }
   await download(options.url, temp);
   info("Download success!");
-  import_fs3.default.rmSync(dest, { force: true });
-  import_fs3.default.renameSync(temp, dest);
+  import_node_fs2.default.rmSync(dest, { force: true });
+  import_node_fs2.default.renameSync(temp, dest);
   return dest;
 }
 
 // src/index.ts
-var import_path2 = __toESM(require("path"));
+var import_node_path2 = __toESM(require("node:path"));
 var import_node_os = __toESM(require("node:os"));
 var INPUT_DOWNLOAD_URL = getInput("download-url", { required: true });
 var INPUT_MITE_VERSION = getInput("mite-version", { required: true });
 async function run() {
-  const gradleUserHome = process.env.GRADLE_USER_HOME ?? import_path2.default.join(import_node_os.default.homedir(), ".gradle");
+  const gradleUserHome = process.env.GRADLE_USER_HOME || import_node_path2.default.join(import_node_os.default.homedir(), ".gradle");
   const options = {
     url: INPUT_DOWNLOAD_URL,
     version: INPUT_MITE_VERSION,
     gradle: gradleUserHome
   };
+  const regex = /^[A-Za-z0-9._-]+$/;
+  if (!regex.test(options.version)) {
+    error(`Invalid mite-version '${options.version}': only letters, digits, '.', '_' and '-' are allowed`);
+    return;
+  }
   startGroup("setup mite");
-  const dest = await setup(options);
-  info(`File is ready at ${dest}`);
-  endGroup();
+  try {
+    const dest = await setup(options);
+    info(`File is ready at ${dest}`);
+  } finally {
+    endGroup();
+  }
 }
 run().catch((err) => {
   setFailed(err instanceof Error ? err.message : String(err));
