@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "description": "GitHub Action to download MITE jar",
   "main": "dist/index.js",
-  "author": "yuchenxue",
+  "author": "Xueria",
   "license": "MIT",
   "scripts": {
     "build": "node build.mjs",
