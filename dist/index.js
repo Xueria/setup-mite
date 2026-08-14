@@ -19456,6 +19456,11 @@ async function run() {
     version: INPUT_MITE_VERSION,
     gradle: gradleUserHome
   };
+  const regex = /^[A-Za-z0-9._-]+$/;
+  if (!regex.test(options.version)) {
+    error(`Invalid mite-version '${options.version}': only letters, digits, '.', '_' and '-' are allowed`);
+    return;
+  }
   startGroup("setup mite");
   try {
     const dest = await setup(options);
