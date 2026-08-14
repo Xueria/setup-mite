@@ -1,11 +1,24 @@
-import fs from "fs";
-import https from "https";
+import fs from "node:fs";
+import https from "node:https";
 import * as core from "@actions/core";
+import * as http from "node:http";
 
 export class DownloadError extends Error {
     constructor(message: string, readonly url: string, readonly status?: number) {
         super(`${message} (url: ${url}, status: ${status ?? "n/a"})`);
         this.name = "DownloadError";
+    }
+}
+
+function client(url: string) {
+    const protocol = new URL(url).protocol;
+    switch (protocol) {
+        case "http:":
+            return http;
+        case "https:":
+            return https;
+        default:
+            throw new DownloadError(`Unsupported protocol '${protocol}'`, url);
     }
 }
 
@@ -40,7 +53,7 @@ export function download(url: string, dest: string) {
         });
 
         const request = (url: string, redirects: number) => {
-            const req = https.get(url, {
+            const req = client(url).get(url, {
                 headers: {"User-Agent": "github-action"},
                 timeout: TIMEOUT_MS,
             }, (response) => {
@@ -69,7 +82,7 @@ export function download(url: string, dest: string) {
 export function sizeof(url: string): Promise<number> {
     return new Promise<number>((resolve, reject) => {
         const request = (url: string, redirects: number) => {
-            const req = https.request(url, {
+            const req = client(url).request(url, {
                 method: "HEAD",
                 headers: {"User-Agent": "github-action"},
                 timeout: TIMEOUT_MS,

@@ -1,6 +1,6 @@
 import * as core from "@actions/core";
 import {setup, SetupOptions} from "./setup";
-import path from "path";
+import path from "node:path";
 import os from "node:os";
 
 export const INPUT_DOWNLOAD_URL = core.getInput("download-url", {required: true});
