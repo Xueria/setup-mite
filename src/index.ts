@@ -17,10 +17,12 @@ async function run() {
 
     core.startGroup("setup mite");
 
-    const dest = await setup(options);
-    core.info(`File is ready at ${dest}`);
-
-    core.endGroup();
+    try {
+        const dest = await setup(options);
+        core.info(`File is ready at ${dest}`);
+    } finally {
+        core.endGroup();
+    }
 }
 
 run().catch((err) => {
