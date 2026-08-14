@@ -1,11 +1,14 @@
-name: Build
-on: [ push, workflow_dispatch ]
+name: Build Prerelease
+on: [ push, pull_request, workflow_dispatch ]
 
 jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-      - name: checkout
+      - name: checkout action
+        uses: actions/checkout@v7
+
+      - name: checkout mite mod
         uses: actions/checkout@v7
         with:
           repository: MinecraftIsTooEasy/Sieve
@@ -21,7 +24,7 @@ jobs:
         uses: gradle/actions/setup-gradle@v6
 
       - name: setup mite
-        uses: Xueria/setup-mite@v1
+        uses: ./
         with:
           download-url: https://maven.limingzxc.top/repository/maven-releases/com/mojang/minecraft/1.6.4-MITE/minecraft-1.6.4-MITE.jar
           mite-version: 1.6.4-MITE
@@ -31,4 +34,3 @@ jobs:
           cd ./test
           chmod +x ./gradlew
           ./gradlew build
-
