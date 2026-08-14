@@ -7,7 +7,7 @@ export const INPUT_DOWNLOAD_URL = core.getInput("download-url", {required: true}
 export const INPUT_MITE_VERSION = core.getInput("mite-version", {required: true});
 
 async function run() {
-    const gradleUserHome = process.env.GRADLE_USER_HOME ?? path.join(os.homedir(), ".gradle");
+    const gradleUserHome = process.env.GRADLE_USER_HOME || path.join(os.homedir(), ".gradle");
 
     const options: SetupOptions = {
         url: INPUT_DOWNLOAD_URL,
