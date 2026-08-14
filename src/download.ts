@@ -57,10 +57,18 @@ export function download(url: string, dest: string) {
                 headers: {"User-Agent": "github-action"},
                 timeout: TIMEOUT_MS,
             }, (response) => {
+                response.on("error", fail);
+
                 if (response.statusCode! >= 300 && response.statusCode! < 400 && response.headers.location) {
                     response.resume();
                     if (redirects === 0) return fail(new DownloadError("Too many redirects", url, response.statusCode));
-                    return request(new URL(response.headers.location, url).toString(), redirects - 1);
+
+                    // prevent invalid location
+                    try {
+                        return request(new URL(response.headers.location, url).toString(), redirects - 1);
+                    } catch (err) {
+                        return fail(err instanceof Error ? err : new Error(String(err)));
+                    }
                 }
 
                 if (response.statusCode !== 200) {
@@ -68,7 +76,6 @@ export function download(url: string, dest: string) {
                     return fail(new DownloadError("Server returned non-200", url, response.statusCode));
                 }
 
-                response.on("error", fail);
                 response.pipe(file);
             });
             req.on("timeout", () => req.destroy(new DownloadError("request timed out", url)));
@@ -87,18 +94,32 @@ export function sizeof(url: string): Promise<number> {
                 headers: {"User-Agent": "github-action"},
                 timeout: TIMEOUT_MS,
             }, (response) => {
+                response.on("error", () => resolve(-1))
+
                 if (response.statusCode! >= 300 && response.statusCode! < 400 && response.headers.location) {
                     response.resume();
-                    if (redirects === 0) return resolve(0);
-                    return request(new URL(response.headers.location, url).toString(), redirects - 1);
+                    if (redirects === 0) return resolve(-1);
+
+                    // prevent invalid location
+                    try {
+                        return request(new URL(response.headers.location, url).toString(), redirects - 1);
+                    } catch {
+                        return resolve(-1);
+                    }
                 }
 
                 response.resume();
+
+                if (response.statusCode !== 200) {
+                    core.warning(`HEAD ${url} returned ${response.statusCode}, will download`);
+                    return resolve(-1);
+                }
+
                 const remoteSize = Number(response.headers["content-length"]);
 
                 if (!Number.isFinite(remoteSize)) {
                     core.warning(`No content-length from ${url}, will download`);
-                    return resolve(0);
+                    return resolve(-1);
                 }
 
                 core.info(`Remote file size: ${remoteSize}`)
@@ -109,7 +130,7 @@ export function sizeof(url: string): Promise<number> {
             req.on("timeout", () => req.destroy());
             req.on("error", () => {
                 core.warning(`Failed to query size of ${url}, will download`);
-                resolve(0);
+                resolve(-1);
             });
             req.end();
         };
